@@ -1,0 +1,115 @@
+---
+title: "Bootstrapping Lecture"
+author: "Andrew Lampinen"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r}
+library(tidyverse)
+```
+```{r}
+theme_set(theme_classic())
+```
+
+# What is bootstrapping anyway?
+
+## What's wrong with parametric tests?
+
+Let's see some examples! One common non-normal distribution is the *log-normal* distribution, i.e. a distribution that is normal after you take its logarithm. Many natural processes have distributions like this. One of particular interest to us is reaction times.
+
+
+```{r}
+parametric_plotting_data = data.frame(group = rep(rep(c("Group 1", "Group 2"), each=10000), 2),
+                                      type = rep(c("Normal", "Log-normal"), each=20000),
+                                      value = c(rnorm(10000, 0, 0.1),  # normal 1
+                                                rnorm(10000, 0, 1),  # normal 2
+                                                exp(rnorm(10000, 0, 0.1))-exp(0.005),  # non-normal 1
+                                                exp(rnorm(10000, 0, 1))-exp(0.125))) # non-normal 2
+
+```
+
+Let's see how violating the assumption of normality changes the results of `t.test`. We'll compare two situations 
+
+Valid: comparing two normally distributed populations with equal means but unequal variances.
+
+Invalid: comparing two log-normally distributed populations with equal means but unequal variances.
+
+```{r}
+ggplot(parametric_plotting_data, aes(x=value, color=type)) +
+  geom_density() +
+  geom_vline(data=parametric_plotting_data %>%
+               group_by(group, type) %>%
+               summarize(mean_value = mean(value), sd_value = sd(value)),
+             aes(xintercept=mean_value, color=type), linetype=2) +
+  facet_grid(group ~ type, scales="free")
+```
+
+
+```{r}
+gen_data_and_test = function(num_observations_per) {
+x = rnorm(num_observations_per, 0, 0.1)
+y = rnorm(num_observations_per, 0, 1)
+
+pnormal = t.test(x, y, var.equal=F)$p.value
+
+# what if the data are log-normally distributed?
+x = exp(rnorm(num_observations_per, 0, 0.1))-exp(0.005)   
+y = exp(rnorm(num_observations_per, 0, 1))-exp(0.5)
+pnotnormal = t.test(x, y, var.equal=F)$p.value 
+return(c(pnormal, pnotnormal))
+}
+
+parametric_issues_demo = function(num_tests, num_observations_per) {
+  replicate(num_tests, gen_data_and_test(num_observations_per))
+}
+```
+
+```{r}
+set.seed(0) # ensures we get the same results each time we run it
+
+num_tests = 10000
+
+parametric_issues_results = parametric_issues_demo(num_tests=num_tests, # how many datasets to generate/tests to run
+                                                  num_observations_per=20)# how many obsservations in each dataset
+
+
+
+
+parametric_issues_d = data.frame(valid_tests = parametric_issues_results[1,],
+                                 invalid_tests = parametric_issues_results[2,],
+                                 iteration=1:num_tests) %>%
+  gather(type, p_value, contains("tests")) %>%
+  mutate(is_significant = p_value < 0.05)
+
+# Number false positives with normall distributed data
+sum(parametric_issues_results[1,] < 0.05)
+
+# number of false positives with log-normally distributed data w/ different variances
+sum(parametric_issues_results[2,] < 0.05)
+```
+ 
+```{r}
+ggplot(parametric_issues_d, aes(x=p_value, fill=is_significant)) +
+  geom_histogram(breaks=seq(0, 1, 0.01)) +
+  facet_grid(type ~ .) +
+  geom_hline(yintercept=0.01*num_tests,
+             linetype=2,
+             alpha=0.5) +
+  annotate("text", x=0.8, y=150, label="Nominal rate") +
+  scale_fill_brewer(palette="Set2")
+```
+
+That's a crazy inflation in the false positive rate!
+
+
+
+# Applications
+
+## Bootstrap confidence intervals
+
+## Bootstrap (& permutation) hypothesis tests
+
+## Bootstrap power analysis
