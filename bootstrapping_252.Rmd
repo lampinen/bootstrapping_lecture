@@ -9,7 +9,9 @@ output:
 
 ```{r}
 library(tidyverse)
+library(boot)
 ```
+
 ```{r}
 theme_set(theme_classic())
 ```
@@ -18,16 +20,17 @@ theme_set(theme_classic())
 
 ## What's wrong with parametric tests?
 
-Let's see some examples! One common non-normal distribution is the *log-normal* distribution, i.e. a distribution that is normal after you take its logarithm. Many natural processes have distributions like this. One of particular interest to us is reaction times.
+### T-tests on non-normal distributions
 
+Let's see some examples! One common non-normal distribution is the *log-normal* distribution, i.e. a distribution that is normal after you take its logarithm. Many natural processes have distributions like this. One of particular interest to us is reaction times.
 
 ```{r}
 parametric_plotting_data = data.frame(group = rep(rep(c("Group 1", "Group 2"), each=10000), 2),
                                       type = rep(c("Normal", "Log-normal"), each=20000),
-                                      value = c(rnorm(10000, 0, 0.1),  # normal 1
-                                                rnorm(10000, 0, 1),  # normal 2
-                                                exp(rnorm(10000, 0, 0.1))-exp(0.005),  # non-normal 1
-                                                exp(rnorm(10000, 0, 1))-exp(0.125))) # non-normal 2
+                                      value = c(rnorm(10000, 0, 1),  # normal 1
+                                                rnorm(10000, 0.66, 1),  # normal 2
+                                                exp(rnorm(10000, 0, 1)),  # Non-normal 1
+                                                exp(rnorm(10000, 0.66, 1))))  # Non-normal 2
 
 ```
 
@@ -47,18 +50,18 @@ ggplot(parametric_plotting_data, aes(x=value, color=type)) +
   facet_grid(group ~ type, scales="free")
 ```
 
-
 ```{r}
 gen_data_and_test = function(num_observations_per) {
-x = rnorm(num_observations_per, 0, 0.1)
-y = rnorm(num_observations_per, 0, 1)
+x = rnorm(num_observations_per, 0, 1.1)
+y = rnorm(num_observations_per, 1, 1.1)
 
-pnormal = t.test(x, y, var.equal=F)$p.value
+pnormal = t.test(x, y)$p.value
 
 # what if the data are log-normally distributed?
-x = exp(rnorm(num_observations_per, 0, 0.1))-exp(0.005)   
-y = exp(rnorm(num_observations_per, 0, 1))-exp(0.5)
-pnotnormal = t.test(x, y, var.equal=F)$p.value 
+x = exp(rnorm(num_observations_per, 0, 1.1))
+y = exp(rnorm(num_observations_per, 1, 1.1))
+
+pnotnormal = t.test(x, y)$p.value 
 return(c(pnormal, pnotnormal))
 }
 
@@ -70,10 +73,11 @@ parametric_issues_demo = function(num_tests, num_observations_per) {
 ```{r}
 set.seed(0) # ensures we get the same results each time we run it
 
-num_tests = 10000
+num_tests = 10000 # how many datasets to generate/tests to run
+num_observations_per = 20 # how many obsservations in each dataset
 
-parametric_issues_results = parametric_issues_demo(num_tests=num_tests, # how many datasets to generate/tests to run
-                                                  num_observations_per=20)# how many obsservations in each dataset
+parametric_issues_results = parametric_issues_demo(num_tests=num_tests, 
+                                                   num_observations_per=num_observations_per)
 
 
 
@@ -84,27 +88,159 @@ parametric_issues_d = data.frame(valid_tests = parametric_issues_results[1,],
   gather(type, p_value, contains("tests")) %>%
   mutate(is_significant = p_value < 0.05)
 
-# Number false positives with normall distributed data
+# Number significant results with normally distributed data
 sum(parametric_issues_results[1,] < 0.05)
 
-# number of false positives with log-normally distributed data w/ different variances
+# number of significant results with log-normally distributed data
 sum(parametric_issues_results[2,] < 0.05)
 ```
  
 ```{r}
-ggplot(parametric_issues_d, aes(x=p_value, fill=is_significant)) +
-  geom_histogram(breaks=seq(0, 1, 0.01)) +
-  facet_grid(type ~ .) +
-  geom_hline(yintercept=0.01*num_tests,
-             linetype=2,
-             alpha=0.5) +
-  annotate("text", x=0.8, y=150, label="Nominal rate") +
-  scale_fill_brewer(palette="Set2")
+ggplot(parametric_issues_d, aes(x=type, fill=is_significant)) +
+  geom_bar(stat="count", color="black") +
+  scale_fill_brewer(palette="Set1") +
+  labs(title="Parametric t-test")
 ```
 
-That's a crazy inflation in the false positive rate!
+That's a non-trivial reduction in power from a misspecified model! (~80% to ~54%).
+
+```{r}
+boot_mean_diff_test = function(x, y) {
+  boot_iterate = function(x, y) {
+    x_samp = sample(x, 
+                    length(x), 
+                    replace=T)
+    y_samp = sample(y, 
+                    length(y), 
+                    replace=T)
+    mean_diff = mean(y_samp) - mean(x_samp)
+    return(mean_diff)
+  }
+  boots = replicate(100, boot_iterate(x, y))
+  quants = quantile(boots, probs=c(0.025, 0.925))
+  return(sign(quants[1]) == sign(quants[2]))
+
+}
+```
 
 
+```{r}
+gen_data_and_boot_test = function(num_observations_per) {
+x = rnorm(num_observations_per, 0, 1.1)
+y = rnorm(num_observations_per, 1, 1.1)
+
+pnormal = boot_mean_diff_test(x, y)
+
+# what if the data are log-normally distributed?
+x = exp(rnorm(num_observations_per, 0, 1.1))
+y = exp(rnorm(num_observations_per, 1, 1.1))
+
+pnotnormal = boot_mean_diff_test(x, y)
+return(c(pnormal, pnotnormal))
+}
+
+boot_results = replicate(num_tests, gen_data_and_boot_test(num_observations_per))
+sum(boot_results[1,])
+sum(boot_results[2,])
+```
+
+While the bootstrap **actually loses power** relative to a perfectly specified model, it is much more **robust** to changes in the assumptions of that model, and so it **retains more power when assumptions are violated**.
+
+### Non-IID noise and linear models
+
+```{r}
+num_points = 500
+true_intercept = 0
+true_slope = 1.
+set.seed(0)
+parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
+                                type = rep(c("IID Error", "Scaling Error"), each=num_points),
+                                error = rep(rnorm(num_points, 0, 1)), 2) %>%
+  mutate(DV = ifelse(
+    type == "IID Error",
+    true_slope*IV + error,
+    true_slope*IV + 2*abs(IV)*error)) # error increases proportional to distance from 0 on the IV
+
+```
+
+```{r}
+ggplot(parametric_ci_data,
+       aes(x=IV, y=DV, color=type)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(method="lm", se=T, color="black", 
+              size=1.5, level=0.999) + # inflating the confidence bands a bit
+                                       # to show their distribution is similar
+  scale_color_brewer(palette="Accent") +
+  facet_wrap(~type)
+```
+
+
+```{r}
+summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="IID Error")))
+summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="Scaling Error")))
+```
+```{r}
+ex2_lm_bootstrap_CIs = function(data) {
+  lm_results = summary(lm(DV ~ IV, data=data))$coefficients
+  bootstrap_coefficients = function(data, indices) {
+    linear_model = lm(DV ~ IV, 
+                      data=data[indices,]) # will select a bootstrap sample of the data
+    return(linear_model$coefficients)
+  }
+
+  boot_results = boot(data=data,
+                      statistic=bootstrap_coefficients,
+                      R=1000)
+  boot_intercept_CI = boot.ci(boot_results, index=1, type="bca")
+  boot_slope_CI = boot.ci(boot_results, index=2, type="bca")
+  return(data.frame(intercept_estimate=lm_results[1, 1],
+                    intercept_SE=lm_results[1,2],
+                    slope_estimate=lm_results[2, 1],
+                    slope_SE=lm_results[2,2],
+                    intercept_boot_CI_low=boot_intercept_CI$bca[4],
+                    intercept_boot_CI_hi=boot_intercept_CI$bca[5],
+                    slope_boot_CI_low=boot_slope_CI$bca[4],
+                    slope_boot_CI_hi=boot_slope_CI$bca[5]))
+}
+```
+
+```{r}
+set.seed(0) # for bootstraps
+coefficient_CI_data = parametric_ci_data %>%
+  group_by(type) %>%
+  do(ex2_lm_bootstrap_CIs(.)) %>%
+  ungroup() 
+```
+
+```{r}
+coefficient_CI_data = coefficient_CI_data %>%
+  gather(variable, value, -type) %>%
+  separate(variable, c("parameter", "measurement"), extra="merge") %>%
+  spread(measurement, value) %>%
+  mutate(parametric_CI_low=estimate-1.96*SE,
+         parametric_CI_hi=estimate+1.96*SE) %>%
+  gather(CI_type, value, contains("CI")) %>%
+  separate(CI_type, c("CI_type", "high_or_low"), extra="merge") %>%
+  spread(high_or_low, value)
+```
+
+```{r}
+ggplot(data=coefficient_CI_data, aes(x=parameter, color=CI_type, y=estimate, ymin=CI_low, ymax=CI_hi, linetype=CI_type)) +
+  geom_point(size=5, position=position_dodge(width=0.15)) +
+  geom_errorbar(position=position_dodge(width=0.15)) +
+  facet_grid(~type) + 
+  geom_hline(data=data.frame(parameter=c("intercept", "slope"),
+                             estimate=c(true_intercept, true_slope)), 
+             mapping=aes(yintercept=estimate),
+             alpha=0.5, linetype=3) +
+  scale_y_continuous(breaks=c(0, 0.5, 1)) +
+  scale_color_brewer(palette="Dark2")
+```
+
+This can result in CIs which aren't actually at the nominal confidence level! And since CIs are equivalent to t-tests in this setting, this can also increase false positive rates.
+(Also equivalent to Bayesian CrIs.)
+
+TODO: Show false positive inflation with null model.
 
 # Applications
 
