@@ -155,7 +155,7 @@ true_slope = 1.
 set.seed(0)
 parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
                                 type = rep(c("IID Error", "Scaling Error"), each=num_points),
-                                error = rep(rnorm(num_points, 0, 1)), 2) %>%
+                                error = rep(rnorm(num_points, 0, 1), 2)) %>%
   mutate(DV = ifelse(
     type == "IID Error",
     true_slope*IV + error,
@@ -168,19 +168,24 @@ ggplot(parametric_ci_data,
        aes(x=IV, y=DV, color=type)) +
   geom_point(alpha=0.5) +
   geom_smooth(method="lm", se=T, color="black", 
-              size=1.5, level=0.999) + # inflating the confidence bands a bit
+              size=1.5, level=0.9999) + # inflating the confidence bands a bit
                                        # to show their distribution is similar
   scale_color_brewer(palette="Accent") +
-  facet_wrap(~type)
+  facet_wrap(~type) +
+  guides(color=F)
+```
+```{r}
+ggsave("figures/error_dist_non_null.png", width=5, height=3)
 ```
 
+C.f. Anscombe's quartet, etc.
 
 ```{r}
 summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="IID Error")))
 summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="Scaling Error")))
 ```
 ```{r}
-ex2_lm_bootstrap_CIs = function(data) {
+ex2_lm_bootstrap_CIs = function(data, R=1000) {
   lm_results = summary(lm(DV ~ IV, data=data))$coefficients
   bootstrap_coefficients = function(data, indices) {
     linear_model = lm(DV ~ IV, 
@@ -190,7 +195,7 @@ ex2_lm_bootstrap_CIs = function(data) {
 
   boot_results = boot(data=data,
                       statistic=bootstrap_coefficients,
-                      R=1000)
+                      R=R)
   boot_intercept_CI = boot.ci(boot_results, index=1, type="bca")
   boot_slope_CI = boot.ci(boot_results, index=2, type="bca")
   return(data.frame(intercept_estimate=lm_results[1, 1],
@@ -226,21 +231,115 @@ coefficient_CI_data = coefficient_CI_data %>%
 
 ```{r}
 ggplot(data=coefficient_CI_data, aes(x=parameter, color=CI_type, y=estimate, ymin=CI_low, ymax=CI_hi, linetype=CI_type)) +
-  geom_point(size=5, position=position_dodge(width=0.15)) +
-  geom_errorbar(position=position_dodge(width=0.15)) +
-  facet_grid(~type) + 
   geom_hline(data=data.frame(parameter=c("intercept", "slope"),
                              estimate=c(true_intercept, true_slope)), 
              mapping=aes(yintercept=estimate),
-             alpha=0.5, linetype=3) +
+             size=1, linetype=3) +
+  geom_point(size=5, position=position_dodge(width=0.15)) +
+  geom_errorbar(position=position_dodge(width=0.15), size=1) +
+  facet_grid(~type) + 
   scale_y_continuous(breaks=c(0, 0.5, 1)) +
   scale_color_brewer(palette="Dark2")
 ```
+```{r}
+ggsave("figures/error_dist_CI_example.png", width=5, height=3)
+```
+
+Challenge Q: Why isn't the error on the intercept changed in the scaling error case?
 
 This can result in CIs which aren't actually at the nominal confidence level! And since CIs are equivalent to t-tests in this setting, this can also increase false positive rates.
 (Also equivalent to Bayesian CrIs.)
 
-TODO: Show false positive inflation with null model.
+
+```{r}
+num_points = 200
+true_intercept = 0
+true_slope = 0.
+set.seed(0)
+parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
+                                type = rep(c("IID Error", "Scaling Error"), each=num_points),
+                                error = rep(rnorm(num_points, 0, 1), 2)) %>%
+  mutate(DV = ifelse(
+    type == "IID Error",
+    true_slope*IV + error,
+    true_slope*IV + 2*abs(IV)*error)) # error increases proportional to distance from 0 on the IV
+
+```
+
+```{r}
+ggplot(parametric_ci_data,
+       aes(x=IV, y=DV, color=type)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(method="lm", se=T, color="black", 
+              size=1.5, level=0.9999) + # inflating the confidence bands a bit
+                                       # to show their distribution is similar
+  scale_color_brewer(palette="Accent") +
+  facet_wrap(~type) +
+  guides(color=F)
+```
+
+```{r}
+ggsave("figures/error_dist_null.png", width=5, height=3)
+```
+
+
+```{r}
+error_dist_null_sample = function(num_points) {
+  true_intercept = 0
+  true_slope = 0
+  # We'll sample only for the scaling error case, we know IID works 
+  this_data = data.frame(IV = runif(num_points,  -1, 1),
+                         error = rnorm(num_points, 0, 1)) %>%
+    mutate(DV = true_slope*IV + 2*abs(IV)*error) # error increases proportional to distance from 0 on the IV
+
+  coefficient_CI_data = ex2_lm_bootstrap_CIs(this_data,
+                                             R=500) # take fewer bootstrap samples, to speed things up
+  
+  coefficient_CI_data = coefficient_CI_data %>%
+    gather(variable, value) %>%
+    separate(variable, c("parameter", "measurement"), extra="merge") %>%
+    spread(measurement, value) %>%
+    mutate(parametric_CI_low=estimate-1.96*SE,
+           parametric_CI_hi=estimate+1.96*SE) %>%
+    gather(CI_type, value, contains("CI")) %>%
+    separate(CI_type, c("CI_type", "high_or_low"), extra="merge") %>%
+    spread(high_or_low, value) %>%
+    mutate(significant = sign(CI_hi) == sign(CI_low)) %>%
+    select(parameter, CI_type, significant)
+  return(list(coefficient_CI_data))
+}
+```
+
+```{r}
+num_simulations = 500
+num_points = 200
+set.seed(0)
+noise_dist_simulation_results = replicate(num_simulations, error_dist_null_sample(num_points)) %>%
+  bind_rows()
+```
+
+```{r}
+ggplot(noise_dist_simulation_results, aes(x=CI_type, fill=significant)) +
+  geom_bar(stat="count", color="black") +
+  scale_fill_brewer(palette="Set1", direction=-1) + 
+  facet_wrap(~parameter) +
+  scale_y_continuous(breaks=c(0, 0.05*num_simulations, num_simulations),
+                     labels=c("0%", expression(Nominal ~ alpha), "100%")) +
+  labs(x="CI Type",
+       y="Proportion significant") +
+  geom_hline(yintercept=0.05*num_simulations, linetype=2)
+```
+```{r}
+ggsave("figures/error_dist_proportion_significant.png", width=5, height=3)
+```
+
+```{r}
+noise_dist_simulation_results %>%
+  count(parameter, CI_type, significant) %>%
+  mutate(prop=n/num_simulations)
+```
+
+Alpha nearly triples for the parametric model!
 
 # Applications
 
