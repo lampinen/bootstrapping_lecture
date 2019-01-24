@@ -343,6 +343,7 @@ ggplot(noise_dist_simulation_results, aes(x=CI_type, fill=significant)) +
        y="Proportion significant") +
   geom_hline(yintercept=0.05*num_simulations, linetype=2)
 ```
+
 ```{r}
 ggsave("figures/error_dist_proportion_significant.png", width=5, height=3)
 ```
@@ -381,6 +382,79 @@ ggsave("figures/conceptual_density_plot.png", width=5, height=3)
 ```
 
 ## Bootstrap resampling
+
+### Demo
+```{r}
+num_points = 100
+true_intercept = 0
+true_slope = 1.
+set.seed(2) # I p-hacked the shit out of this demo to make the ideas more clear
+parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
+                                type = rep(c("IID Error", "Scaling Error"), each=num_points),
+                                error = rep(rnorm(num_points, 0, 1), 2)) %>%
+  mutate(DV = ifelse(
+    type == "IID Error",
+    true_slope*IV + error,
+    true_slope*IV + 2*abs(IV)*error)) # error increases proportional to distance from 0 on the IV
+```
+
+```{r}
+p = ggplot(parametric_ci_data,
+       aes(x=IV, y=DV)) +
+  geom_point(alpha=0.25) +
+  geom_smooth(method="lm", se=F, color="black", 
+              size=1.5) + 
+  facet_wrap(~type) 
+p
+```
+```{r}
+#ggsave("figures/bootstrap_demo_1.png", width=5, height=3)
+```
+
+```{r}
+set.seed(15) # See above RE: p-hacking
+samp_1_indices = sample(1:num_points, num_points, replace=T)
+samp_1 = parametric_ci_data[c(samp_1_indices, samp_1_indices+num_points), ] # take the same rows from each type of data
+set.seed(2) # See above RE: p-hacking
+samp_2_indices = sample(1:num_points, num_points, replace=T)
+samp_2 = parametric_ci_data[c(samp_2_indices, samp_2_indices+num_points), ]
+
+many_samples_indices = sample(1:num_points, 8*num_points, replace=T)
+many_samples = bind_rows(samp_1 %>%
+                           mutate(sample=1), 
+                         samp_2 %>% mutate(sample=2),
+                         parametric_ci_data[c(many_samples_indices, many_samples_indices+num_points),] %>%
+                           mutate(sample=rep(rep(3:10, each=num_points), 2)))
+```
+
+```{r}
+p + 
+  geom_point(data=samp_1,
+             aes(color=NA), color="red", alpha=0.5) +
+  geom_smooth(data=samp_1,
+              method="lm", se=F, color="red", 
+              size=1.5) 
+
+```
+
+```{r}
+p + 
+  geom_point(data=samp_2,
+             aes(color=NA), color="red", alpha=0.5) +
+  geom_smooth(data=samp_2,
+              method="lm", se=F, color="red", 
+              size=1.5) 
+```
+
+```{r}
+p +  
+  geom_smooth(data=many_samples,
+              aes(group=sample),
+              method="lm", se=F, 
+              size=1.5,
+              color="red")
+```
+
 
 # Applications
 
