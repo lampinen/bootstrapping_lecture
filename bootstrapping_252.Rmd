@@ -230,23 +230,33 @@ coefficient_CI_data = coefficient_CI_data %>%
          parametric_CI_hi=estimate+1.96*SE) %>%
   gather(CI_type, value, contains("CI")) %>%
   separate(CI_type, c("CI_type", "high_or_low"), extra="merge") %>%
-  spread(high_or_low, value)
+  spread(high_or_low, value) %>%
+  mutate(CI_type = factor(CI_type))
 ```
 
 ```{r}
-ggplot(data=coefficient_CI_data, aes(x=parameter, color=CI_type, y=estimate, ymin=CI_low, ymax=CI_hi, linetype=CI_type)) +
-  geom_hline(data=data.frame(parameter=c("intercept", "slope"),
-                             estimate=c(true_intercept, true_slope)), 
-             mapping=aes(yintercept=estimate),
-             linetype=3) +
-  geom_point(size=2, position=position_dodge(width=0.15)) +
-  geom_errorbar(position=position_dodge(width=0.15)) +
-  facet_grid(~type) + 
-  scale_y_continuous(breaks=c(0, 0.5, 1)) +
-  scale_color_brewer(palette="Dark2")
+plot_coefficient_CI_data = function(coefficient_CI_data, errorbar_width=0.5) {
+  p = ggplot(data=coefficient_CI_data, aes(x=parameter, color=CI_type, y=estimate, ymin=CI_low, ymax=CI_hi)) +
+    geom_hline(data=data.frame(parameter=c("intercept", "slope"),
+                               estimate=c(true_intercept, true_slope)), 
+               mapping=aes(yintercept=estimate),
+               linetype=3) +
+    geom_point(size=2, position=position_dodge(width=0.2)) +
+    geom_errorbar(position=position_dodge(width=0.2), width=errorbar_width) +
+    facet_grid(~type) + 
+    scale_y_continuous(breaks=c(0, 0.5, 1), limits=c(-0.2, 1.5)) +
+    scale_color_brewer(palette="Dark2", drop=F)
+}
 ```
+
 ```{r}
+plot_coefficient_CI_data(coefficient_CI_data)
 ggsave("figures/error_dist_CI_example.png", width=5, height=3)
+
+plot_coefficient_CI_data(coefficient_CI_data %>% 
+                           filter(CI_type=="parametric"),
+                         0.25)
+ggsave("figures/error_dist_CI_example_parametric_only.png", width=5, height=3)
 ```
 
 Challenge Q: Why isn't the error on the intercept changed in the scaling error case?
@@ -350,24 +360,27 @@ False positive rate nearly triples for the parametric model!
 ```{r}
 density_similarity_conceptual_plot_data = expand.grid(x=seq(0, 4, 0.01),
                                                       y=seq(0, 4, 0.01)) %>%
-  mutate(group_1 = exp(-((x-2)^2 +(y-3)^2)/8) * exp(-((x-2/y)^2 +(y-1/x)^2)/2), #These are definitely not proper distributions
-         group_2 = exp(-((x)^2 +(y)^2)/8) * exp(-((x/2)^2 +(y/2-1/x)^2)/2)) %>% 
-  gather(group, value, contains("group"))
+  mutate(population_1 = exp(-((x-2)^2 +(y-3)^2)/8) * exp(-((x-2/y)^2 +(y-1/x)^2)/2), #These are definitely not proper distributions
+         population_2 = exp(-((x)^2 +(y)^2)/8) * exp(-((x/2)^2 +(y/2-1/x)^2)/2)) %>% 
+  gather(population, value, contains("population"))
   
 ```
 
 ```{r}
 ggplot(density_similarity_conceptual_plot_data,
-       aes(x=x, y=y, z=value, color=group)) +
+       aes(x=x, y=y, z=value, color=population)) +
   geom_contour(size=1, bins=8) +
   scale_color_brewer(palette="Dark2") +
-  facet_wrap(~group)
+  facet_wrap(~population) +
+  labs(x = "Feature 1", y="Feature 2") +
+  guides(color=F)
 ```
 
 ```{r}
 ggsave("figures/conceptual_density_plot.png", width=5, height=3)
 ```
 
+## Bootstrap resampling
 
 # Applications
 

@@ -1,0 +1,149 @@
+\documentclass{beamer} %use [handout] to get summary]
+\usepackage{pgfpages}
+%\setbeameroption{show notes on second screen=left} %enable for notes
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\lstset{language=python,frame=single}
+\usepackage{verbatim}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{appendixnumberbeamer}
+\usepackage{xparse}
+\usepackage{multimedia}
+\usepackage{tikz}
+\usetikzlibrary{matrix,backgrounds}
+\pgfdeclarelayer{myback}
+\pgfsetlayers{myback,background,main}
+
+\tikzset{mycolor/.style = {line width=1bp,color=#1}}%
+\tikzset{myfillcolor/.style = {draw,fill=#1}}%
+\tikzstyle{line} = [draw, line width=1pt]
+\tikzstyle{arrow} = [draw, line width=1pt, ->]
+
+\NewDocumentCommand{\highlight}{O{blue!40} m m}{%
+\draw[mycolor=#1,rounded corners] (#2.north west)rectangle (#3.south east);
+}
+
+\NewDocumentCommand{\fhighlight}{O{blue!40} m m}{%
+\draw[myfillcolor=#1,rounded corners] (#2.north west)rectangle (#3.south east);
+}
+
+\usetheme[numbering=fraction]{metropolis}
+%%\AtBeginSection[]
+%%{
+%%  \begin{frame}
+%%    \frametitle{Table of Contents}
+%%    \tableofcontents[currentsection]
+%%  \end{frame}
+%%}
+
+%%\let\olditem\item
+%%\renewcommand{\item}{\vspace{0.5\baselineskip}\olditem}
+
+\newcommand{\E}[1]{\mathbb{E}\left[#1\right]}
+\begin{document}
+
+\title{Bootstrapping}
+\subtitle{(and a bit more)}
+\author{Andrew Lampinen}
+\date{Psych 252, Winter 2019}
+\frame{\titlepage}
+
+
+\section{Introduction}
+
+\begin{frame}{Outline}
+\vspace{1em}
+\tableofcontents
+\end{frame}
+
+
+\section{Why bootstrapping?}
+\begin{frame}[standout]
+Bootstrapping makes fewer assumptions than parametric methods. 
+\end{frame}
+
+\begin{frame}[label=heteroscedasticity]
+\frametitle{Non-IID noise (heteroscedasticity)}
+\only<-7>{
+\begin{figure}
+\centering
+\only<1>{
+\includegraphics[width=\textwidth]{figures/error_dist_non_null.png}
+}
+\only<2>{
+\includegraphics[width=\textwidth]{figures/heteroscedasticity_consequences.png}
+}
+\only<3>{
+\includegraphics[width=\textwidth]{figures/what_does_that_mean.png}
+}
+\only<4>{
+\includegraphics[width=\textwidth]{figures/error_dist_CI_example_parametric_only.png}
+}
+\only<5>{
+\includegraphics[width=\textwidth]{figures/error_dist_CI_example.png}
+}
+\only<6>{
+\includegraphics[width=\textwidth]{figures/error_dist_null.png}
+}
+\only<7>{
+\includegraphics[width=\textwidth]{figures/error_dist_proportion_significant.png}
+}
+\end{figure}
+}
+\only<8->{
+    \begin{itemize}[<+(7)->] \itemsep 1em
+    \item Linear models assume IID noise.
+    \item Therefore heteroscedasticity leads to incorrect confidence intervals \textbf{and} hypothesis tests.
+    \item Bootstrapping avoids this assumption, and so can still behave appropriately.
+    \end{itemize}
+}
+\end{frame}
+
+\begin{frame}[standout]
+Bootstrapping makes fewer assumptions than parametric methods, so it works better when those assumptions don't hold. 
+\end{frame}
+
+\begin{frame}{A case study in weird tests}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/conceptual_density_plot.png}
+\end{figure}
+$$\text{Test statistic} = \frac{D_\text{KL}\left(P_1 || \frac{P_1 + P_2}{2}\right) + D_\text{KL}\left(P_2 || \frac{P_1 + P_2}{2}\right)}{2}$$
+\end{frame}
+
+\begin{frame}[standout]
+Bootstrapping makes fewer assumptions than parametric methods, so it can be applied in cases where parametric sampling distributions aren't known. 
+\end{frame}
+
+\section{What is bootstrapping anyway?}
+
+\begin{frame}[standout]
+Your best (or only) estimate of what's happening in the population is what's happening in your sample. 
+\end{frame}
+
+\againframe<1>{heteroscedasticity}
+
+\begin{frame}{Bootstrap resampling}
+\begin{itemize}[<+->] \itemsep 1em
+\item We want to understand our uncertainty about a statistic we are estimating (e.g. a difference of means).
+\item One way to do this would be to run many experiments, and see how much that parameter varies, but usually this is infeasible.
+\item Instead, we assume our sample distribution closely approximates the population distribution.
+\item Therefore we can \textbf{simulate} these repeated experiments by \textbf{resampling from our sample with replacement.}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Bootstrap resampling demo}
+
+\end{frame}
+
+\section{Bootstrap confidence intervals}
+
+\section{Bootstrap (and permutation) tests}
+
+\section{Bootstrap power analyses}
+
+\end{document}
