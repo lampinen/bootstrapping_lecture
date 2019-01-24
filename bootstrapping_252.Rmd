@@ -47,7 +47,11 @@ ggplot(parametric_plotting_data, aes(x=value, color=type)) +
                group_by(group, type) %>%
                summarize(mean_value = mean(value), sd_value = sd(value)),
              aes(xintercept=mean_value, color=type), linetype=2) +
+  xlim(-5, 20) +
   facet_grid(group ~ type, scales="free")
+```
+```{r}
+ggsave("figures/log_normal_dists.png", width=5, height=4)
 ```
 
 ```{r}
@@ -234,9 +238,9 @@ ggplot(data=coefficient_CI_data, aes(x=parameter, color=CI_type, y=estimate, ymi
   geom_hline(data=data.frame(parameter=c("intercept", "slope"),
                              estimate=c(true_intercept, true_slope)), 
              mapping=aes(yintercept=estimate),
-             size=1, linetype=3) +
-  geom_point(size=5, position=position_dodge(width=0.15)) +
-  geom_errorbar(position=position_dodge(width=0.15), size=1) +
+             linetype=3) +
+  geom_point(size=2, position=position_dodge(width=0.15)) +
+  geom_errorbar(position=position_dodge(width=0.15)) +
   facet_grid(~type) + 
   scale_y_continuous(breaks=c(0, 0.5, 1)) +
   scale_color_brewer(palette="Dark2")
@@ -339,7 +343,31 @@ noise_dist_simulation_results %>%
   mutate(prop=n/num_simulations)
 ```
 
-Alpha nearly triples for the parametric model!
+False positive rate nearly triples for the parametric model!
+
+### Density estimate conceptual plot
+
+```{r}
+density_similarity_conceptual_plot_data = expand.grid(x=seq(0, 4, 0.01),
+                                                      y=seq(0, 4, 0.01)) %>%
+  mutate(group_1 = exp(-((x-2)^2 +(y-3)^2)/8) * exp(-((x-2/y)^2 +(y-1/x)^2)/2), #These are definitely not proper distributions
+         group_2 = exp(-((x)^2 +(y)^2)/8) * exp(-((x/2)^2 +(y/2-1/x)^2)/2)) %>% 
+  gather(group, value, contains("group"))
+  
+```
+
+```{r}
+ggplot(density_similarity_conceptual_plot_data,
+       aes(x=x, y=y, z=value, color=group)) +
+  geom_contour(size=1, bins=8) +
+  scale_color_brewer(palette="Dark2") +
+  facet_wrap(~group)
+```
+
+```{r}
+ggsave("figures/conceptual_density_plot.png", width=5, height=3)
+```
+
 
 # Applications
 
