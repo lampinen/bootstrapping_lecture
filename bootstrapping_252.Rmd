@@ -408,7 +408,7 @@ p = ggplot(parametric_ci_data,
 p
 ```
 ```{r}
-#ggsave("figures/bootstrap_demo_1.png", width=5, height=3)
+ggsave("figures/bootstrap_demo_1.png", width=5, height=3)
 ```
 
 ```{r}
@@ -438,6 +438,10 @@ p +
 ```
 
 ```{r}
+ggsave("figures/bootstrap_demo_2.png", width=5, height=3)
+```
+
+```{r}
 p + 
   geom_point(data=samp_2,
              aes(color=NA), color="red", alpha=0.5) +
@@ -446,6 +450,9 @@ p +
               size=1.5) 
 ```
 
+```{r}
+ggsave("figures/bootstrap_demo_2.png", width=5, height=3)
+```
 ```{r}
 p +  
   geom_smooth(data=many_samples,
