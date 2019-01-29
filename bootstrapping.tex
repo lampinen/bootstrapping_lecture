@@ -5,7 +5,7 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{hyperref}
-\lstset{language=python,frame=single}
+\lstset{language=R,frame=single}
 \usepackage{verbatim}
 \usepackage{subcaption}
 \usepackage{amsmath}
@@ -140,21 +140,66 @@ Your best (or only) estimate of what's happening in the population is what's hap
 \begin{figure}
 \centering
 \only<1>{
-\includegraphics[width=\textwidth]{figures/bootstrap_demo_1.png}
+\includegraphics[width=\textwidth]{figures/bootstrap_demo_0.png}
 }
 \only<2>{
-\includegraphics[width=\textwidth]{figures/bootstrap_demo_2.png}
+\includegraphics[width=\textwidth]{figures/bootstrap_demo_1.png}
 }
 \only<3>{
-\includegraphics[width=\textwidth]{figures/bootstrap_demo_3.png}
+\includegraphics[width=\textwidth]{figures/bootstrap_demo_2.png}
 }
 \only<4>{
+\includegraphics[width=\textwidth]{figures/bootstrap_demo_3.png}
+}
+\only<5>{
 \includegraphics[width=\textwidth]{figures/bootstrap_demo_4.png}
+}
+\only<6>{
+\includegraphics[width=\textwidth]{figures/bootstrap_demo_5.png}
 }
 \end{figure}
 \end{frame}
 
 \section{Bootstrap confidence intervals}
+
+\begin{frame}{Bootstrap confidence intervals}
+A simple application:
+\begin{itemize}[<+(1)->] \itemsep 1em
+\item We compute a statistic (such as the mean) from some data, and want to understand our uncertainty about it.
+\item Remember: The bootstrap idea is that we can \textbf{simulate} these repeated experiments by \textbf{resampling from our sample with replacement.}
+\item Now, we'll use the sampling distribution that we ``observe'' in these ``experiments'' to construct a confidence interval.
+\item The simplest method (``percentile'') just uses the 2.5\% and 97.5\% quantiles of the bootstrap sampling distribution as the CI endpoints.
+\end{itemize}
+\end{frame}
+
+\begin{frame}<1>[fragile, label=boot_CI_demo]
+\frametitle{Bootstrap CI demo}
+\begin{figure}
+\centering
+\only<1>{
+\includegraphics[width=\textwidth]{figures/bootstrap_CI_0.png}
+}
+\only<2>{
+\includegraphics[width=\textwidth]{figures/bootstrap_CI_1.png}
+}
+\only<3>{
+\includegraphics[width=\textwidth]{figures/bootstrap_CI_2.png}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+To compute a bootstrap percentile CI, compute a bootstrap sampling distribution and take the 2.5\% and 97.5\% quantiles as the CI endpoints.
+\end{frame}
+
+\againframe<2->{boot_CI_demo}
+
+\begin{frame}[standout]
+Generally BCA intervals are superior. You can get them from the boot library in R!
+\end{frame}
+
+
+
 
 \section{Bootstrap (and permutation) tests}
 

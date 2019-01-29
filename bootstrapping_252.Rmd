@@ -408,12 +408,12 @@ p = ggplot(parametric_ci_data,
 p
 ```
 ```{r}
-ggsave("figures/bootstrap_demo_1.png", width=5, height=3)
+ggsave("figures/bootstrap_demo_0.png", width=5, height=3)
 ```
 
 ```{r}
 set.seed(15) # See above RE: p-hacking
-samp_1_indices = sample(1:num_points, num_points, replace=T)
+samp_1_indices = sample(2:num_points, num_points, replace=T)
 samp_1 = parametric_ci_data[c(samp_1_indices, samp_1_indices+num_points), ] # take the same rows from each type of data
 set.seed(2) # See above RE: p-hacking
 samp_2_indices = sample(1:num_points, num_points, replace=T)
@@ -425,6 +425,17 @@ many_samples = bind_rows(samp_1 %>%
                          samp_2 %>% mutate(sample=2),
                          parametric_ci_data[c(many_samples_indices, many_samples_indices+num_points),] %>%
                            mutate(sample=rep(rep(3:10, each=num_points), 2)))
+```
+
+```{r}
+p + 
+  geom_point(data=samp_1,
+             aes(color=NA), color="red", alpha=0.5) 
+
+```
+
+```{r}
+ggsave("figures/bootstrap_demo_1.png", width=5, height=3)
 ```
 
 ```{r}
@@ -444,6 +455,17 @@ ggsave("figures/bootstrap_demo_2.png", width=5, height=3)
 ```{r}
 p + 
   geom_point(data=samp_2,
+             aes(color=NA), color="red", alpha=0.5) 
+```
+
+```{r}
+ggsave("figures/bootstrap_demo_3.png", width=5, height=3)
+```
+
+
+```{r}
+p + 
+  geom_point(data=samp_2,
              aes(color=NA), color="red", alpha=0.5) +
   geom_smooth(data=samp_2,
               method="lm", se=F, color="red", 
@@ -451,8 +473,9 @@ p +
 ```
 
 ```{r}
-ggsave("figures/bootstrap_demo_2.png", width=5, height=3)
+ggsave("figures/bootstrap_demo_4.png", width=5, height=3)
 ```
+
 ```{r}
 p +  
   geom_smooth(data=many_samples,
@@ -463,9 +486,106 @@ p +
 ```
 
 
+```{r}
+ggsave("figures/bootstrap_demo_5.png", width=5, height=3)
+```
+
 # Applications
 
 ## Bootstrap confidence intervals
+
+```{r}
+num_flips = 20
+true_heads_prob = 0.9
+set.seed(2)
+flips = rbinom(num_flips, 1, true_heads_prob)
+mean(flips)
+sd(flips)/sqrt(num_flips)
+```
+
+
+
+```{r}
+num_top_points = 23
+num_mid_points = 4
+num_outlier_points = 2
+max_score = 100
+set.seed(0)
+test_score_data = data.frame(
+  score=c(rbinom(num_top_points, max_score, 0.9999), rbinom(num_mid_points, max_score, 0.97), sample(0:max_score, num_outlier_points, replace=T)),
+  type="Observed sample"
+)
+```
+
+```{r}
+get_mean_score = function(data, indices) {
+  return(mean(data[indices,]$score))
+}
+
+bootstrap_results = boot(test_score_data, get_mean_score, R=1000)
+bootstrap_CIs = boot.ci(bootstrap_results)
+bootstrap_CIs
+```
+
+```{r}
+test_summary_data = test_score_data %>%
+  summarise(mean=mean(score),
+            se=sd(score)/sqrt(n()),
+            parametric_CI_low=mean-1.96*se,
+            parametric_CI_high=mean+1.96*se) 
+
+test_score_data = test_score_data %>%
+  bind_rows(
+    data.frame(score=bootstrap_results$t, type="Boot. sampling dist.")
+  )  %>%
+  mutate(type=factor(type, levels=c("Observed sample", "Boot. sampling dist.")))
+
+test_summary_data = test_summary_data %>%
+  mutate(type = factor("Boot. sampling dist.", levels=levels(test_score_data$type)),
+         percentile_CI_low=bootstrap_CIs$percent[4],
+         percentile_CI_high=bootstrap_CIs$percent[5],
+         bca_CI_low=bootstrap_CIs$bca[4],
+         bca_CI_high=bootstrap_CIs$bca[5]) %>%
+  gather(CI_type, value, contains("CI")) %>%
+  separate(CI_type, c("CI_type", "endpoint"), extra="merge") %>%
+  spread(endpoint, value) %>%
+  mutate(y=c(170, 210, 190),
+         CI_type=factor(CI_type, levels=c("parametric", "percentile", "bca"), labels=c("Normal", "Boot: %", "Boot: BCA")))
+```
+
+```{r}
+ggplot(test_summary_data %>%
+             filter(CI_type != "Boot: BCA"), aes(x=score)) +
+  geom_histogram(data=test_score_data,
+                 binwidth=1) +
+  geom_point(mapping=aes(x=mean, y=y, color=CI_type),
+             size=2) +
+  geom_errorbarh(mapping=aes(y=y, color=CI_type, xmin=CI_low, x=NULL, xmax=CI_high),
+                 size=1,
+                 position=position_dodge()) +
+  facet_grid(type ~ ., scales="free_y")+
+  scale_color_brewer(palette="Dark2") +
+  guides(color=guide_legend(title="CI"))
+
+
+```
+```{r}
+ggsave("figures/bootstrap_CI_0.png", width=5, height=3)
+```
+```{r}
+ggplot(test_summary_data, aes(x=score)) +
+  geom_histogram(data=test_score_data,
+                 binwidth=1) +
+  geom_point(mapping=aes(x=mean, y=y, color=CI_type),
+             size=2) +
+  geom_errorbarh(mapping=aes(y=y, color=CI_type, xmin=CI_low, x=NULL, xmax=CI_high),
+                 size=1,
+                 position=position_dodge()) +
+  facet_grid(type ~ ., scales="free_y")+
+  scale_color_brewer(palette="Dark2") +
+  guides(color=guide_legend(title="CI"))
+ggsave("figures/bootstrap_CI_1.png", width=5, height=3)
+```
 
 ## Bootstrap (& permutation) hypothesis tests
 
