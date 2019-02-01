@@ -10,6 +10,8 @@ output:
 ```{r}
 library(tidyverse)
 library(boot)
+# devtools::install_github("thomasp85/patchwork", force=T)
+library(patchwork) 
 ```
 
 ```{r}
@@ -590,7 +592,7 @@ flip_data = data.frame(flip_result = factor(flips, labels=c("Tails", "Heads")))
 ```
 
 ```{r}
-ggplot(data = flip_data, aes(x = flips, fill = flips)) +
+flip_data_plot = ggplot(data = flip_data, aes(x = flips, fill = flips)) +
   geom_dotplot(binwidth=0.03) +
   scale_x_continuous(breaks = c(0, 1),
                      labels = c("tails", "heads")) +
@@ -608,5 +610,41 @@ bootstrap_CIs = boot.ci(bootstrap_results)
 bootstrap_CIs
 ```
 
+```{r}
+flip_boot_plot = ggplot(data=data.frame(mean_flips=bootstrap_results$t),
+                        aes(x=mean_flips)) +
+  geom_histogram(binwidth=0.05) +
+  xlim(0, 1) +
+  geom_vline(xintercept=0.5,
+             color="red",
+             size=1.1) +
+  annotate("text",
+           label="Null value",
+           color="red",
+           x=0.43, y=100,
+           angle=90,
+           size=4) +
+  annotate("text",
+           label="95% CI",
+           color="blue",
+           x=0.75, y=276,
+           size=4) +
+  geom_errorbarh(aes(xmin=bootstrap_CIs$bca[4],
+                    xmax=bootstrap_CIs$bca[5],
+                    y=260),
+                 color="blue", 
+                 size=1.1,
+                 height=10) +
+  labs(x="Boot. sampling dist.")
+
+flip_boot_plot
+```
+```{r}
+flip_data_plot + flip_boot_plot +
+  plot_layout()
+
+
+ggsave("figures/bootstrap_test.png", width=5, height=2.5)
+```
 
 ## Bootstrap power analysis

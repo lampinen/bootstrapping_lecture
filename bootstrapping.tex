@@ -215,8 +215,16 @@ Estimation is at least as important as testing!
 How can we use bootstrapping for hypothesis testing?
 \begin{itemize}[<+(1)->]
 \item Construct a bootstrap $1-\alpha$ confidence interval.
-\item Reject the null if the null value of the statistic isn't included in this CI.
+\item Reject the null if the null hypothesis value of the statistic isn't included in this CI.
 \end{itemize}
+\uncover<4-5>{
+\includegraphics[width=\textwidth]{figures/bootstrap_test.png}
+\begin{tikzpicture}[overlay, remember picture]
+\only<4>{
+\fill [bg] (5.25, 0) -- (5.25, 6) -- (10.8, 6) -- (10.8, 0);
+}
+\end{tikzpicture}
+}
 \end{frame}
 
 
