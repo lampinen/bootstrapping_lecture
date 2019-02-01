@@ -68,6 +68,9 @@ Bootstrapping makes fewer assumptions than parametric methods.
 
 \begin{frame}[label=heteroscedasticity]
 \frametitle{Non-IID noise (heteroscedasticity)}
+\only<6-7>{
+Now assume the null:
+}
 \only<-7>{
 \begin{figure}
 \centering
@@ -122,10 +125,14 @@ Bootstrapping makes fewer assumptions than parametric methods, so it can be appl
 \section{What is bootstrapping anyway?}
 
 \begin{frame}[standout]
-Your best (or only) estimate of what's happening in the population is what's happening in your sample. 
+Fundamental idea: Your best (or only) estimate of what's happening in the population is what's happening in your sample. 
 \end{frame}
 
 \againframe<1>{heteroscedasticity}
+
+\begin{frame}[standout]
+So instead of making assumptions about the population, we'll use what we actually know from the sample.
+\end{frame}
 
 \begin{frame}{Bootstrap resampling}
 \begin{itemize}[<+->] \itemsep 1em
@@ -198,10 +205,21 @@ To compute a bootstrap percentile CI, compute a bootstrap sampling distribution 
 Generally BCA intervals are superior. You can get them from the boot library in R!
 \end{frame}
 
-
-
-
 \section{Bootstrap (and permutation) tests}
+
+\begin{frame}[standout]
+Estimation is at least as important as testing! 
+\end{frame}
+
+\begin{frame}{Bootstrap hypothesis tests}
+How can we use bootstrapping for hypothesis testing?
+\begin{itemize}[<+(1)->]
+\item Construct a bootstrap $1-\alpha$ confidence interval.
+\item Reject the null if the null value of the statistic isn't included in this CI.
+\end{itemize}
+\end{frame}
+
+
 
 \section{Bootstrap power analyses}
 

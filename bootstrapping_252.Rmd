@@ -494,14 +494,6 @@ ggsave("figures/bootstrap_demo_5.png", width=5, height=3)
 
 ## Bootstrap confidence intervals
 
-```{r}
-num_flips = 20
-true_heads_prob = 0.9
-set.seed(2)
-flips = rbinom(num_flips, 1, true_heads_prob)
-mean(flips)
-sd(flips)/sqrt(num_flips)
-```
 
 
 
@@ -588,5 +580,33 @@ ggsave("figures/bootstrap_CI_1.png", width=5, height=3)
 ```
 
 ## Bootstrap (& permutation) hypothesis tests
+
+```{r}
+num_flips = 20
+true_heads_prob = 0.9
+set.seed(2)
+flips = rbinom(num_flips, 1, true_heads_prob)
+flip_data = data.frame(flip_result = factor(flips, labels=c("Tails", "Heads")))
+```
+
+```{r}
+ggplot(data = flip_data, aes(x = flips, fill = flips)) +
+  geom_dotplot(binwidth=0.03) +
+  scale_x_continuous(breaks = c(0, 1),
+                     labels = c("tails", "heads")) +
+  scale_y_continuous(breaks=c()) +
+  labs(x="Flip result", y="")
+```
+
+```{r}
+get_mean_heads = function(data, indices) {
+  return(mean(data[indices, "flip_result"] == "Heads"))
+}
+
+bootstrap_results = boot(flip_data, get_mean_heads, R=1000)
+bootstrap_CIs = boot.ci(bootstrap_results)
+bootstrap_CIs
+```
+
 
 ## Bootstrap power analysis
