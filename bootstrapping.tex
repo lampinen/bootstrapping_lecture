@@ -227,8 +227,50 @@ How can we use bootstrapping for hypothesis testing?
 }
 \end{frame}
 
+\begin{frame}[standout]
+Bootstrap hypothesis testing: reject the null if the null value isn't contained in the CI.
+\end{frame}
+
+\begin{frame}{Bootstrap tests \& $p$-values: some food for thought}
+There are some subtle conceptual issues here:
+\begin{itemize}[<+(1)->]
+\item In NHST, we calculate the sampling distribution \textbf{under the null}, and see whether \textbf{our observed statistic} is surprising.
+\item Here, we calculate the (approximate) sampling distribution under the \textbf{(approximate) population distribution,} and see whether the \textbf{null value} is surprising.
+\item In many cases (such as anytime the null is true, or if the assumptions of e.g. linear regression hold), bootstrap tests are \textbf{exactly} NHST.
+\item More generally, the bootstrap testing procedure \textbf{is valid}, in the sense that it has the nominal false-positive rate, but the interpretation of the $p$-value is not the same as in NHST.  
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Permutation tests}
+Sometimes we can actually nonparametrically sample from the null.
+\end{frame}
 
 
 \section{Bootstrap power analyses}
+
+
+\section{Wrapping up}
+
+\begin{frame}{Summary}
+
+\end{frame}
+
+\begin{frame}{Further reading}
+\begin{itemize}
+\item The classic:
+    \begin{itemize}
+    \item An Introduction to the Bootstrap, Efron \& Tibshirani, 1993
+    \end{itemize}
+\item Bootstrap hypothesis testing 
+    \begin{itemize}
+    \item \url{https://core.ac.uk/download/pdf/6494364.pdf} 
+    \end{itemize}
+\item More advanced \& general: 
+    \begin{itemize}
+    \item All of Nonparametric Statistics, Larry Wasserstein, 2006 (available electronically through Stanford!)
+    \item 
+    \end{itemize}
+\end{itemize}
+\end{frame}
 
 \end{document}
