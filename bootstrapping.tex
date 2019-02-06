@@ -137,13 +137,25 @@ So instead of making assumptions about the population, we'll use what we actuall
 \begin{frame}{Bootstrap resampling}
 \begin{itemize}[<+->] \itemsep 1em
 \item We want to understand our uncertainty about a statistic we are estimating (e.g. a difference of means).
-\item One way to do this would be to run many experiments, and see how much that parameter varies, but usually this is infeasible.
+\item The correct (frequentist) way to do this would be to run many experiments, and see how much that parameter varies, but usually this is infeasible.
 \item Instead, we assume our sample distribution closely approximates the population distribution.
 \item Therefore we can \textbf{simulate} these repeated experiments by \textbf{resampling from our sample with replacement.}
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Bootstrap resampling demo}
+\begin{frame}[standout]
+We'll estimate a sampling distribution for our statistic of interest by resampling (with replacement) from our experimental sample.
+\end{frame}
+
+\begin{frame}<1>[label=boot_resamp_I]
+\frametitle<1>{Bootstrap resampling demo I}
+\frametitle<2>{Bootstrap CI demo I}
+\centering
+\url{http://wise.cgu.edu/portfolio/bootstrapping/}
+\end{frame}
+
+\begin{frame}[label=boot_resamp_II]
+\frametitle{Bootstrap resampling demo II}
 \begin{figure}
 \centering
 \only<1>{
@@ -179,8 +191,10 @@ A simple application:
 \end{itemize}
 \end{frame}
 
+\againframe<2>{boot_resamp_I}
+
 \begin{frame}<1>[fragile, label=boot_CI_demo]
-\frametitle{Bootstrap CI demo}
+\frametitle{Bootstrap CI demo II}
 \begin{figure}
 \centering
 \only<1>{
@@ -205,6 +219,10 @@ To compute a bootstrap percentile CI, compute a bootstrap sampling distribution 
 Generally BCA intervals are superior. You can get them from the boot library in R!
 \end{frame}
 
+\againframe<1>{heteroscedasticity}
+\againframe<6>{boot_resamp_II}
+\againframe<5>{heteroscedasticity}
+
 \section{Bootstrap (and permutation) tests}
 
 \begin{frame}[standout]
@@ -228,7 +246,25 @@ How can we use bootstrapping for hypothesis testing?
 \end{frame}
 
 \begin{frame}[standout]
-Bootstrap hypothesis testing: reject the null if the null value isn't contained in the CI.
+Bootstrap hypothesis testing: reject the null if the null value isn't contained in the 95\%-CI.
+\end{frame}
+
+\begin{frame}{Bootstrap $p$-values}
+How can we get a $p$-value? 
+\begin{itemize}[<+(1)->]
+\item Find $\alpha$ so that the null value is just at the edge of the $(1-\alpha)$ CI,
+ and let $p = \alpha$.
+\end{itemize}
+\only<-2>{
+\includegraphics[width=\textwidth]{figures/bootstrap_test.png}
+}
+\only<3->{
+\includegraphics[width=\textwidth]{figures/bootstrap_test_999.png}
+}
+\end{frame}
+
+\begin{frame}[standout]
+Bootstrap $p$-values: $p$ is the min $\alpha$ such that the null value isn't contained in the $(1-\alpha)$ CI.
 \end{frame}
 
 \begin{frame}{Bootstrap tests \& $p$-values: some food for thought}
@@ -237,12 +273,15 @@ There are some subtle conceptual issues here:
 \item In NHST, we calculate the sampling distribution \textbf{under the null}, and see whether \textbf{our observed statistic} is surprising.
 \item Here, we calculate the (approximate) sampling distribution under the \textbf{(approximate) population distribution,} and see whether the \textbf{null value} is surprising.
 \item In many cases (such as anytime the null is true, or if the assumptions of e.g. linear regression hold), bootstrap tests are \textbf{exactly} NHST.
-\item More generally, the bootstrap testing procedure \textbf{is valid}, in the sense that it has the nominal false-positive rate, but the interpretation of the $p$-value is not the same as in NHST.  
+\item More generally, the bootstrap testing procedure \textbf{is valid}, in the sense that it has the nominal false-positive rate, but the interpretation of the $p$-value is not standard.  
 \end{itemize}
 \end{frame}
 
 \begin{frame}{Permutation tests}
-Sometimes we can actually nonparametrically sample from the null.
+\begin{itemize}[<+->]
+\item Sometimes we can actually nonparametrically sample from the null.
+\item In a two-sample test, the null is that the 
+\end{itemize}
 \end{frame}
 
 
