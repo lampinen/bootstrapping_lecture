@@ -338,6 +338,28 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
 
 \section{Wrapping up}
 
+\begin{frame}{A few notes and caveats}
+\only<1-2>{
+\begin{figure}
+\only<1>{
+\includegraphics[width=\textwidth]{figures/panacea.jpg}
+}
+\only<2>{
+\includegraphics[width=\textwidth]{figures/panacea2.jpg}
+}
+\end{figure}
+}
+\only<3->{
+\begin{itemize}[<+(2)->]
+\item If you can make the data better through experiment design or transformation, do that first (it can only improve things). 
+\item Samples should not be ``too'' small ($\gtrsim 20$ points, otherwise you \textbf{need} stronger assumptions that probably will be mostly easily expressed in a parametric framework).  
+\item Should be many resamples ($R \approx 1000$ at least, come on, it's the 21st century, modern laptops are more powerful than 20th century supercomputers).
+\item Non-parametrics are still generally \textbf{not} robust to non-independence, so still need to use mixed(/hierarchical) models, and bootstrapping within these models must respect dependence structure.
+\end{itemize}
+}
+
+\end{frame}
+
 \begin{frame}{Summary}
 \begin{itemize}
 \item Your sample is a better description of what's going on in the population than whatever you would assume \textit{a priori}.
@@ -348,7 +370,8 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
     \item Hypothesis tests.
     \item Power calculutations.
     \end{itemize}
-\item These will generally correspond to the parametric versions when the assumptions of the parametric versions hold, but will be more robust when they are violated.
+\item These will generally correspond to the parametric versions when the assumptions of the parametric versions hold, but will be more robust when those assumptions are violated.
+\item Nonparametrics aren't a panacea, but they cure quite a lot. 
 \end{itemize}
 \end{frame}
 
@@ -364,8 +387,7 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
     \end{itemize}
 \item More advanced \& general: 
     \begin{itemize}
-    \item All of Nonparametric Statistics, Larry Wasserstein, 2006 (available electronically through Stanford!)
-    \item 
+    \item All of Nonparametric Statistics, Larry Wasserstein, 2006 (available electronically through Stanford Libraries!)
     \end{itemize}
 \end{itemize}
 \end{frame}
