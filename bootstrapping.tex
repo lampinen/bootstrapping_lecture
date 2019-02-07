@@ -52,14 +52,14 @@
 \date{Psych 252, Winter 2019}
 \frame{\titlepage}
 
-
-\section{Introduction}
-
 \begin{frame}{Outline}
 \vspace{1em}
 \tableofcontents
 \end{frame}
 
+\begin{frame}[standout]
+These slides contain bullet points that summarize the argument.
+\end{frame}
 
 \section{Why bootstrapping?}
 \begin{frame}[standout]
@@ -69,7 +69,7 @@ Bootstrapping makes fewer assumptions than parametric methods.
 \begin{frame}[label=heteroscedasticity]
 \frametitle{Non-IID noise (heteroscedasticity)}
 \only<6-7>{
-Now assume the null:
+What if the null is true?
 }
 \only<-7>{
 \begin{figure}
@@ -98,10 +98,10 @@ Now assume the null:
 \end{figure}
 }
 \only<8->{
-    \begin{itemize}[<+(7)->] \itemsep 1em
+    \begin{itemize} \itemsep 1em
     \item Linear models assume IID noise.
     \item Therefore heteroscedasticity leads to incorrect confidence intervals \textbf{and} hypothesis tests.
-    \item Bootstrapping avoids this assumption, and so can still behave appropriately.
+    \item Bootstrapping avoids this assumption, and so behaves more appropriately if heteroscedasticity is present.
     \end{itemize}
 }
 \end{frame}
@@ -226,7 +226,8 @@ Generally BCA intervals are superior. You can get them from the boot library in 
 \section{Bootstrap (and permutation) tests}
 
 \begin{frame}[standout]
-Estimation is at least as important as testing! 
+Estimation is at least as important as testing! \\[1em]
+... but sometimes we do need a test for reviewer \#2.
 \end{frame}
 
 \begin{frame}{Bootstrap hypothesis tests}
@@ -251,14 +252,14 @@ Bootstrap hypothesis testing: reject the null if the null value isn't contained 
 
 \begin{frame}{Bootstrap $p$-values}
 How can we get a $p$-value? 
-\begin{itemize}[<+(1)->]
+\begin{itemize}
 \item Find $\alpha$ so that the null value is just at the edge of the $(1-\alpha)$ CI,
  and let $p = \alpha$.
 \end{itemize}
-\only<-2>{
+\only<1>{
 \includegraphics[width=\textwidth]{figures/bootstrap_test.png}
 }
-\only<3->{
+\only<2->{
 \includegraphics[width=\textwidth]{figures/bootstrap_test_999.png}
 }
 \end{frame}
@@ -272,13 +273,17 @@ There are some subtle conceptual issues here:
 \begin{itemize}[<+(1)->]
 \item In NHST, we calculate the sampling distribution \textbf{under the null}, and see whether \textbf{our observed statistic} is surprising.
 \item Here, we calculate the (approximate) sampling distribution under the \textbf{(approximate) population distribution,} and see whether the \textbf{null value} is surprising.
-\item In many cases (such as anytime the null is true, or if the assumptions of e.g. linear regression hold), bootstrap tests are \textbf{exactly} NHST.
+\item In many cases (such as anytime the null is true, or if the assumptions of e.g. linear regression hold), bootstrap tests are \textbf{exactly} standard NHST (at least asymptotically).
 \item More generally, the bootstrap testing procedure \textbf{is valid}, in the sense that it has the nominal false-positive rate, but the interpretation of the $p$-value is not standard.  
 \end{itemize}
 \end{frame}
 
+\begin{frame}[standout]
+Bootstrap $p$-values: conceptually tricky, but so are regular frequentist ones, and reviewers probably won't understand either well enough to argue with you. 
+\end{frame}
+
 \begin{frame}{Permutation tests}
-\begin{itemize}[<+->]
+\begin{itemize}[<+->] \itemsep 1.5em
 \item Sometimes we \textbf{can} actually nonparametrically sample from the null.
 \item In a two-sample t-test, the null is that the two groups really are samples from the same distribution. 
 \item We can actually sample from the null by just shuffling the labels. 
@@ -310,9 +315,7 @@ To run a permutation test on data from two groups, randomly shuffle the group la
 
 \begin{frame}[standout]
 Permutation tests maintain more power if $t$-test assumptions are violated. \\[1em]
-\uncover<2>{
-However, both tests benefit from normality, so you should transform your data if that makes it more normal. 
-}
+However, both tests benefit from normality, so you should still transform your data if that makes it more normal. 
 \end{frame}
 
 \section{Bootstrap power analyses}
@@ -351,10 +354,11 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
 }
 \only<3->{
 \begin{itemize}[<+(2)->]
-\item If you can make the data better through experiment design or transformation, do that first (it can only improve things). 
-\item Samples should not be ``too'' small ($\gtrsim 20$ points, otherwise you \textbf{need} stronger assumptions that probably will be mostly easily expressed in a parametric framework).  
-\item Should be many resamples ($R \approx 1000$ at least, come on, it's the 21st century, modern laptops are more powerful than 20th century supercomputers).
-\item Non-parametrics are still generally \textbf{not} robust to non-independence, so still need to use mixed(/hierarchical) models, and bootstrapping within these models must respect dependence structure.
+\item If you can make the data better through experiment design tweaks or data transformation, do that first (it can only improve things). 
+\item Samples should not be ``too'' small ($\gtrsim 20$ points, otherwise you \textbf{need} stronger assumptions that probably will be most easily expressed in a parametric framework).  
+\item Should compute many bootstrap resamples ($R \approx 1000$ at least, come on, it's the 21st century, modern laptops are more powerful than 20th century supercomputers).
+\item Biased estimators can still cause problems.
+\item Non-parametrics generally \textbf{do} assume independence, so still need to use mixed(/hierarchical) models, and bootstrapping within these models must respect their dependence structure.
 \end{itemize}
 }
 
@@ -363,15 +367,15 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
 \begin{frame}{Summary}
 \begin{itemize}
 \item Your sample is a better description of what's going on in the population than whatever you would assume \textit{a priori}.
-\item So we can approximate samples from the population by resampling with replacement from our sample.
-\item Using this to produce sampling distributions, we can compute more accurate estimates of important quantities:
+\item So we will approximate samples from the population by resampling with replacement from our sample.
+\item Using these samples to produce a sampling distribution, we can compute more accurate estimates of important quantities:%
     \begin{itemize}
     \item Confidence intervals.
     \item Hypothesis tests.
     \item Power calculutations.
     \end{itemize}
 \item These will generally correspond to the parametric versions when the assumptions of the parametric versions hold, but will be more robust when those assumptions are violated.
-\item Nonparametrics aren't a panacea, but they cure quite a lot. 
+\item Nonparametrics aren't a panacea, but they help. 
 \end{itemize}
 \end{frame}
 
@@ -385,10 +389,15 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
     \begin{itemize}
     \item \url{https://core.ac.uk/download/pdf/6494364.pdf} 
     \end{itemize}
+\item Permutation tests:
+    \begin{itemize}
+    \item \url{http://faculty.washington.edu/kenrice/sisg/SISG-08-06.pdf} 
+    \end{itemize}
 \item More advanced \& general: 
     \begin{itemize}
     \item All of Nonparametric Statistics, Larry Wasserstein, 2006 (available electronically through Stanford Libraries!)
     \end{itemize}
+\item Wikipedia, stackexchange, as always.
 \end{itemize}
 \end{frame}
 

@@ -289,7 +289,7 @@ true_intercept = 0
 true_slope = 1.
 set.seed(0)
 parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
-                                type = rep(c("IID Error", "Scaling Error"), each=num_points),
+                                type = rep(c("IID Error", "Non-IID Error"), each=num_points),
                                 error = rep(rnorm(num_points, 0, 1), 2)) %>%
   mutate(DV = ifelse(
     type == "IID Error",
@@ -317,7 +317,7 @@ C.f. Anscombe's quartet, etc.
 
 ```{r}
 summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="IID Error")))
-summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="Scaling Error")))
+summary(lm(DV ~ IV, parametric_ci_data %>% filter(type=="Non-IID Error")))
 ```
 ```{r}
 ex2_lm_bootstrap_CIs = function(data, R=1000) {
@@ -402,7 +402,7 @@ true_intercept = 0
 true_slope = 0.
 set.seed(0)
 parametric_ci_data = data.frame(IV = rep(runif(num_points,  -1, 1), 2),
-                                type = rep(c("IID Error", "Scaling Error"), each=num_points),
+                                type = rep(c("IID Error", "Non-IID Error"), each=num_points),
                                 error = rep(rnorm(num_points, 0, 1), 2)) %>%
   mutate(DV = ifelse(
     type == "IID Error",
@@ -470,7 +470,7 @@ ggplot(noise_dist_simulation_results, aes(x=CI_type, fill=significant)) +
   facet_wrap(~parameter) +
   scale_y_continuous(breaks=c(0, 0.05*num_simulations, num_simulations),
                      labels=c("0%", expression(Nominal ~ alpha), "100%")) +
-  labs(x="CI Type",
+  labs(x="Test type",
        y="Proportion significant") +
   geom_hline(yintercept=0.05*num_simulations, linetype=2)
 ```
