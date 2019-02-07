@@ -22,17 +22,16 @@ theme_set(theme_classic())
 
 ## What's wrong with parametric tests?
 
-### T-tests on non-normal distributions
+### T-tests on non-normal distributions (actually not included in slides)
 
 Let's see some examples! One common non-normal distribution is the *log-normal* distribution, i.e. a distribution that is normal after you take its logarithm. Many natural processes have distributions like this. One of particular interest to us is reaction times.
 
 ```{r}
-parametric_plotting_data = data.frame(group = rep(rep(c("Group 1", "Group 2"), each=10000), 2),
-                                      type = rep(c("Normal", "Log-normal"), each=20000),
-                                      value = c(rnorm(10000, 0, 1),  # normal 1
-                                                rnorm(10000, 0.66, 1),  # normal 2
-                                                exp(rnorm(10000, 0, 1)),  # Non-normal 1
-                                                exp(rnorm(10000, 0.66, 1))))  # Non-normal 2
+num_points = 1e4
+parametric_plotting_data = data.frame(distribution = rep(c("Normal", "Log-normal"), each=num_points),
+                                      value = c(rnorm(num_points, 0, 1),  # normal
+                                                exp(rnorm(num_points, 0, 1)) - exp(1/2))) %>%
+  mutate(distribution=factor(distribution, levels=c("Normal", "Log-normal")))
 
 ```
 
@@ -43,31 +42,34 @@ Valid: comparing two normally distributed populations with equal means but unequ
 Invalid: comparing two log-normally distributed populations with equal means but unequal variances.
 
 ```{r}
-ggplot(parametric_plotting_data, aes(x=value, color=type)) +
-  geom_density() +
+ggplot(parametric_plotting_data, aes(x=value, color=distribution)) +
+  geom_density(bw=0.5, size=1) +
   geom_vline(data=parametric_plotting_data %>%
-               group_by(group, type) %>%
+               group_by(distribution) %>%
                summarize(mean_value = mean(value), sd_value = sd(value)),
-             aes(xintercept=mean_value, color=type), linetype=2) +
+             aes(xintercept=mean_value, color=distribution), 
+             linetype=2, size=1) +
   xlim(-5, 20) +
-  facet_grid(group ~ type, scales="free")
+  facet_grid(~ distribution, scales="free") +
+  guides(color=F) +
+  scale_color_brewer(palette="Accent")
 ```
 ```{r}
-ggsave("figures/log_normal_dists.png", width=5, height=4)
+ggsave("figures/log_normal_dists.png", width=5, height=3)
 ```
 
 ```{r}
 gen_data_and_test = function(num_observations_per) {
 x = rnorm(num_observations_per, 0, 1.1)
-y = rnorm(num_observations_per, 1, 1.1)
+y = rnorm(num_observations_per, 0, 1.1)
 
-pnormal = t.test(x, y)$p.value
+pnormal = t.test(x, y, var.equal=T)$p.value
 
 # what if the data are log-normally distributed?
 x = exp(rnorm(num_observations_per, 0, 1.1))
-y = exp(rnorm(num_observations_per, 1, 1.1))
+y = exp(rnorm(num_observations_per, 0, 1.1))
 
-pnotnormal = t.test(x, y)$p.value 
+pnotnormal = t.test(x, y, var.equal=T)$p.value 
 return(c(pnormal, pnotnormal))
 }
 
@@ -79,7 +81,7 @@ parametric_issues_demo = function(num_tests, num_observations_per) {
 ```{r}
 set.seed(0) # ensures we get the same results each time we run it
 
-num_tests = 10000 # how many datasets to generate/tests to run
+num_tests = 1000 # how many datasets to generate/tests to run
 num_observations_per = 20 # how many obsservations in each dataset
 
 parametric_issues_results = parametric_issues_demo(num_tests=num_tests, 
@@ -112,7 +114,8 @@ That's a non-trivial reduction in power from a misspecified model! (~80% to ~54%
 
 ```{r}
 boot_mean_diff_test = function(x, y) {
-  boot_iterate = function(x, y) {
+  obs_t = t.test(x, y)$statistic
+  boot_iterate = function(x, y, indices) { # indices is a dummy here
     x_samp = sample(x, 
                     length(x), 
                     replace=T)
@@ -122,35 +125,161 @@ boot_mean_diff_test = function(x, y) {
     mean_diff = mean(y_samp) - mean(x_samp)
     return(mean_diff)
   }
-  boots = replicate(100, boot_iterate(x, y))
-  quants = quantile(boots, probs=c(0.025, 0.925))
+  boots = boot(data = c(x, y), boot_iterate, R=500)
+#  boots = replicate(100, boot_iterate(x, y))
+#  quants = quantile(boots, probs=c(0.025, 0.975))
+  quants = boot.ci(boots)$bca[4:5]
   return(sign(quants[1]) == sign(quants[2]))
 
 }
 ```
 
-
+(Omitted because with these small sample sizes bootstrapping is problematic -- permutations are better)
 ```{r}
-gen_data_and_boot_test = function(num_observations_per) {
-x = rnorm(num_observations_per, 0, 1.1)
-y = rnorm(num_observations_per, 1, 1.1)
-
-pnormal = boot_mean_diff_test(x, y)
-
-# what if the data are log-normally distributed?
-x = exp(rnorm(num_observations_per, 0, 1.1))
-y = exp(rnorm(num_observations_per, 1, 1.1))
-
-pnotnormal = boot_mean_diff_test(x, y)
-return(c(pnormal, pnotnormal))
-}
-
-boot_results = replicate(num_tests, gen_data_and_boot_test(num_observations_per))
-sum(boot_results[1,])
-sum(boot_results[2,])
+# gen_data_and_boot_test = function(num_observations_per) {
+# x = rnorm(num_observations_per, 0, 1.1)
+# y = rnorm(num_observations_per, 0, 1.1)
+# 
+# pnormal = boot_mean_diff_test(x, y)
+# 
+# # what if the data are log-normally distributed?
+# x = exp(rnorm(num_observations_per, 0, 1.1))
+# y = exp(rnorm(num_observations_per, 1, 1.1))
+# 
+# pnotnormal = boot_mean_diff_test(x, y)
+# return(c(pnormal, pnotnormal))
+# }
+# 
+# boot_results = replicate(num_tests, gen_data_and_boot_test(num_observations_per))
+# sum(boot_results[1,])
+# sum(boot_results[2,])
 ```
 
 While the bootstrap **actually loses power** relative to a perfectly specified model, it is much more **robust** to changes in the assumptions of that model, and so it **retains more power when assumptions are violated**.
+ 
+
+
+```{r}
+perm_mean_diff_test = function(x, y) {
+  obs_t = t.test(x, y)$statistic
+  combined_data = c(x, y)
+  n_combined = length(combined_data)
+  n_x = length(x)
+  perm_iterate = function(x, y) {
+    perm = sample(n_combined)
+    x_samp = combined_data[perm[1:n_x]]
+    y_samp = combined_data[perm[-(1:n_x)]]
+    this_t = t.test(x_samp, y_samp)$statistic
+    return(this_t)
+  }
+  perms = replicate(500, perm_iterate(x, y))
+  quants = quantile(perms, probs=c(0.025, 0.975))
+  return(obs_t < quants[1] | obs_t > quants[2])
+}
+```
+
+```{r message=F, warning=FALSE}
+# this could be much more efficient
+gen_data_and_norm_and_perm_test = function(num_observations_per) {
+  d = data.frame(distribution=c(),
+                 null_true=c(),
+                 parametric=c(),
+                 permutation=c()) 
+    
+  # normally distributed 
+  ## null
+  x = rnorm(num_observations_per, 0, 1.1)
+  y = rnorm(num_observations_per, 0, 1.1)
+  
+  sig_par = t.test(x, y)$p.value < 0.05
+  sig_perm = perm_mean_diff_test(x, y)
+  d = bind_rows(d, 
+                data.frame(distribution="Normal",
+                           null_true=T,
+                           parametric=sig_par,
+                           permutation=sig_perm))
+  
+  ## non-null
+  x = rnorm(num_observations_per, 0, 1.1)
+  y = rnorm(num_observations_per, 1, 1.1)
+  
+  sig_par = t.test(x, y)$p.value < 0.05
+  sig_perm = perm_mean_diff_test(x, y)
+  d = bind_rows(d, 
+                data.frame(distribution="Normal",
+                           null_true=F,
+                           parametric=sig_par,
+                           permutation=sig_perm))
+  
+  # what if the data are log-normally distributed?
+  ## null
+  x = exp(rnorm(num_observations_per, 0, 1.1))
+  y = exp(rnorm(num_observations_per, 0, 1.1))
+  
+  sig_par = t.test(x, y)$p.value < 0.05
+  sig_perm = perm_mean_diff_test(x, y)
+  d = bind_rows(d, 
+                data.frame(distribution="Log-normal",
+                           null_true=T,
+                           parametric=sig_par,
+                           permutation=sig_perm))
+  
+  ## non-null
+  x = exp(rnorm(num_observations_per, 0, 1.1))
+  y = exp(rnorm(num_observations_per, 1, 1.1))
+  
+  sig_par = t.test(x, y)$p.value < 0.05
+  sig_perm = perm_mean_diff_test(x, y)
+  d = bind_rows(d, 
+                data.frame(distribution="Log-normal",
+                           null_true=F,
+                           parametric=sig_par,
+                           permutation=sig_perm))
+  
+  return(d)
+}
+
+perm_results = replicate(num_tests, gen_data_and_norm_and_perm_test(num_observations_per),
+                         simplify=F) %>%
+  bind_rows()
+```
+
+```{r}
+perm_results = perm_results %>%
+  gather(test_type, significant, parametric, permutation) %>%
+  mutate(distribution=factor(distribution, levels=c("Normal", "Log-normal")),
+         null_true=ifelse(null_true, 
+                          "Null True",
+                          "Alternative True"))
+```
+
+```{r}
+ggplot(perm_results %>%
+         filter(null_true == "Alternative True"), aes(x=test_type, fill=significant)) +
+  geom_bar(stat="count", color="black") +
+  scale_fill_brewer(palette="Set1") +
+  facet_grid(null_true ~ distribution) + 
+  geom_hline(data=data.frame(null_true="Alternative True", 
+                        alpha=num_tests*0.8),
+             mapping=aes(yintercept=alpha),
+             linetype=2,
+             size=1,
+             alpha=0.5) +
+  labs(x = "Test type", y = "Percent") +
+  scale_y_continuous(breaks = c(0, 0.8, 1)*num_tests,
+                     labels = paste(c(0, 80, 100), "%", sep=""))
+```
+```{r}
+ggsave("figures/perm_test.png", width=5, height=3)
+```
+
+```{r}
+perm_results %>% 
+  group_by(test_type, distribution, null_true) %>%
+  summarize(pct_significant = sum(significant)/n())
+
+```
+
 
 ### Non-IID noise and linear models
 
@@ -687,5 +816,12 @@ flip_data_plot + flip_boot_plot +
 
 ggsave("figures/bootstrap_test_999.png", width=5, height=2.5)
 ```
+
+## permutation test demo
+
+```{r}
+
+```
+
 
 ## Bootstrap power analysis

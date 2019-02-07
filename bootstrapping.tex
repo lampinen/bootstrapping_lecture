@@ -1,5 +1,5 @@
 \documentclass{beamer} %use [handout] to get summary]
-\usepackage{pgfpages}
+\usepackage{pdfpages}
 %\setbeameroption{show notes on second screen=left} %enable for notes
 \usepackage{graphicx}
 \usepackage{xcolor}
@@ -279,19 +279,77 @@ There are some subtle conceptual issues here:
 
 \begin{frame}{Permutation tests}
 \begin{itemize}[<+->]
-\item Sometimes we can actually nonparametrically sample from the null.
-\item In a two-sample test, the null is that the 
+\item Sometimes we \textbf{can} actually nonparametrically sample from the null.
+\item In a two-sample t-test, the null is that the two groups really are samples from the same distribution. 
+\item We can actually sample from the null by just shuffling the labels. 
+\item (This also works more generally, e.g. if you want to test median differences rather than mean.) 
+\item (I will now steal some slides from Tobi.) 
 \end{itemize}
 \end{frame}
 
+{
+\setbeamercolor{background canvas}{bg=}
+\includepdf[pages=1-6]{permtests.pdf}
+}
+
+\begin{frame}[standout]
+To run a permutation test on data from two groups, randomly shuffle the group labels many times to generate a null sampling distribution.
+\end{frame}
+
+\begin{frame}{Permutation test robustness demo}
+\begin{figure}
+\centering
+\only<1>{
+\includegraphics[width=\textwidth]{figures/log_normal_dists.png}
+}
+\only<2->{
+\includegraphics[width=\textwidth]{figures/perm_test.png}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+Permutation tests maintain more power if $t$-test assumptions are violated. \\[1em]
+\uncover<2>{
+However, both tests benefit from normality, so you should transform your data if that makes it more normal. 
+}
+\end{frame}
 
 \section{Bootstrap power analyses}
+
+\begin{frame}{Can we use bootstrapping to calculate power?}
+\begin{itemize}[<+(1)->]
+\item Yes, if you have pilot or prior experiment data.
+\begin{itemize}
+    \item Bootstrap resample your pilot data with a resample size of e.g. $n=50$.
+    \item See how many times your desired test (which can be any type, including parametric tests!) comes out significant.
+    \item Repeat with a different resample size (e.g. $n=100$). 
+    \item Iterate until you reach a sample size that achieves the desired power.
+\end{itemize}
+\item This will again be more accurate than parametric power calculations when your data don't exactly match the assumed distribution in some way.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[standout]
+To bootstrap a power calculation, run your test on many bootstrap resamples with different resample sizes, and choose the resample size that gives you the desired true positive rate.
+\end{frame}
 
 
 \section{Wrapping up}
 
 \begin{frame}{Summary}
-
+\begin{itemize}
+\item Your sample is a better description of what's going on in the population than whatever you would assume \textit{a priori}.
+\item So we can approximate samples from the population by resampling with replacement from our sample.
+\item Using this to produce sampling distributions, we can compute more accurate estimates of important quantities:
+    \begin{itemize}
+    \item Confidence intervals.
+    \item Hypothesis tests.
+    \item Power calculutations.
+    \end{itemize}
+\item These will generally correspond to the parametric versions when the assumptions of the parametric versions hold, but will be more robust when they are violated.
+\end{itemize}
 \end{frame}
 
 \begin{frame}{Further reading}
