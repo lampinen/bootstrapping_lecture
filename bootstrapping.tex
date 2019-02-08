@@ -181,13 +181,14 @@ We'll estimate a sampling distribution for our statistic of interest by resampli
 
 \section{Bootstrap confidence intervals}
 
-\begin{frame}{Bootstrap confidence intervals}
+\begin{frame}[fragile]
+\frametitle{Bootstrap confidence intervals}
 A simple application:
 \begin{itemize}[<+(1)->] \itemsep 1em
 \item We compute a statistic (such as the mean) from some data, and want to understand our uncertainty about it.
 \item Remember: The bootstrap idea is that we can \textbf{simulate} these repeated experiments by \textbf{resampling from our sample with replacement.}
 \item Now, we'll use the sampling distribution that we ``observe'' in these ``experiments'' to construct a confidence interval.
-\item The simplest method (``percentile'') just uses the 2.5\% and 97.5\% quantiles of the bootstrap sampling distribution as the CI endpoints.
+\item The simplest method (``percentile'') just uses the 2.5\% and 97.5\% quantiles of the bootstrap sampling distribution as the CI endpoints. (This is what \verb!mean_cl_boot! does).
 \end{itemize}
 \end{frame}
 
