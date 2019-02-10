@@ -48,9 +48,15 @@
 
 \title{Bootstrapping}
 \subtitle{(and a bit more)}
+\titlegraphic{}
 \author{Andrew Lampinen}
 \date{Psych 252, Winter 2019}
-\frame{\titlepage}
+\begin{frame}
+\titlepage
+\begin{tikzpicture}[overlay, remember picture]
+\node at (8.5, 5.5) {\includegraphics[width=0.5\textwidth]{figures/drew_homeless.png}};
+\end{tikzpicture}
+\end{frame}
 
 \begin{frame}{Outline}
 \vspace{1em}
@@ -359,10 +365,14 @@ To bootstrap a power calculation, run your test on many bootstrap resamples with
 \item Samples should not be ``too'' small ($\gtrsim 20$ points, otherwise you \textbf{need} stronger assumptions that probably will be most easily expressed in a parametric framework).  
 \item Should compute many bootstrap resamples ($R \approx 1000$ at least, come on, it's the 21st century, modern laptops are more powerful than 20th century supercomputers).
 \item Biased estimators can still cause problems.
-\item Non-parametrics generally \textbf{do} assume independence, so still need to use mixed(/hierarchical) models, and bootstrapping within these models must respect their dependence structure.
+\item Nonparametrics generally \textbf{do} assume independence, so still need to use mixed(/hierarchical) models, and bootstrapping within these models must respect their dependence structure.
 \end{itemize}
 }
 
+\end{frame}
+
+\begin{frame}[standout]
+Bootstrapping doesn't fix everything, you still need to be careful! 
 \end{frame}
 
 \begin{frame}{Summary}
