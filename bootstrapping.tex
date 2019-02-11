@@ -74,13 +74,13 @@ Bootstrapping makes fewer assumptions than parametric methods.
 
 \begin{frame}[label=heteroscedasticity]
 \frametitle{Non-IID noise (heteroscedasticity)}
-\only<6-7>{
+\only<7-8>{
 What if the null is true?
 }
-\only<-7>{
+\only<-8>{
 \begin{figure}
 \centering
-\only<1>{
+\only<1, 4>{
 \includegraphics[width=\textwidth]{figures/error_dist_non_null.png}
 }
 \only<2>{
@@ -89,21 +89,21 @@ What if the null is true?
 \only<3>{
 \includegraphics[width=\textwidth]{figures/what_does_that_mean.png}
 }
-\only<4>{
+\only<5>{
 \includegraphics[width=\textwidth]{figures/error_dist_CI_example_parametric_only.png}
 }
-\only<5>{
+\only<6>{
 \includegraphics[width=\textwidth]{figures/error_dist_CI_example.png}
 }
-\only<6>{
+\only<7>{
 \includegraphics[width=\textwidth]{figures/error_dist_null.png}
 }
-\only<7>{
+\only<8>{
 \includegraphics[width=\textwidth]{figures/error_dist_proportion_significant.png}
 }
 \end{figure}
 }
-\only<8->{
+\only<9->{
     \begin{itemize} \itemsep 1em
     \item Linear models assume IID noise.
     \item Therefore heteroscedasticity leads to incorrect confidence intervals \textbf{and} hypothesis tests.
@@ -149,10 +149,6 @@ So instead of making assumptions about the population, we'll use what we actuall
 \end{itemize}
 \end{frame}
 
-\begin{frame}[standout]
-We'll estimate a sampling distribution for our statistic of interest by resampling (with replacement) from our experimental sample.
-\end{frame}
-
 \begin{frame}<1>[label=boot_resamp_I]
 \frametitle<1>{Bootstrap resampling demo I}
 \frametitle<2>{Bootstrap CI demo I}
@@ -183,6 +179,10 @@ We'll estimate a sampling distribution for our statistic of interest by resampli
 \includegraphics[width=\textwidth]{figures/bootstrap_demo_5.png}
 }
 \end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+We'll estimate a sampling distribution for our statistic of interest by resampling (with replacement) from our experimental sample.
 \end{frame}
 
 \section{Bootstrap confidence intervals}
@@ -228,13 +228,19 @@ Generally BCA intervals are superior. You can get them from the boot library in 
 
 \againframe<1>{heteroscedasticity}
 \againframe<6>{boot_resamp_II}
-\againframe<5>{heteroscedasticity}
+\againframe<6>{heteroscedasticity}
 
 \section{Bootstrap (and permutation) tests}
 
 \begin{frame}[standout]
-Estimation is at least as important as testing! \\[1em]
-... but sometimes we do need a test for reviewer \#2.
+\vspace{1em}
+\only<1>{
+Estimation is at least as important as testing!\\[1em] 
+}
+\only<2->{
+... but sometimes we do need a test for: \\[0.5em]
+\includegraphics[width=0.4\textwidth]{figures/reviewer_2.jpg}
+}
 \end{frame}
 
 \begin{frame}{Bootstrap hypothesis tests}
@@ -286,7 +292,9 @@ There are some subtle conceptual issues here:
 \end{frame}
 
 \begin{frame}[standout]
-Bootstrap $p$-values: conceptually tricky, but so are regular frequentist ones, and reviewers probably won't understand either well enough to argue with you. 
+\vspace{1em}
+Bootstrap $p$-values: conceptually tricky, but so are regular frequentist ones, and reviewers probably won't understand either well enough to argue with you. \\[0.5em]
+\includegraphics[width=0.7\textwidth]{figures/visible_confusion.jpg}
 \end{frame}
 
 \begin{frame}{Permutation tests}
@@ -342,7 +350,7 @@ However, both tests benefit from normality, so you should still transform your d
 \end{frame}
 
 \begin{frame}[standout]
-To bootstrap a power calculation, run your test on many bootstrap resamples with different resample sizes, and choose the resample size that gives you the desired true positive rate.
+To bootstrap a power calculation, run your test on many bootstrap resamples with different resample sizes, and choose the resample size that gives you the desired detection rate.
 \end{frame}
 
 
